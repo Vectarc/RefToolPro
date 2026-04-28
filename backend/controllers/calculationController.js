@@ -7,6 +7,8 @@ const r454bSaturationService = require('../services/r454bSaturationService');
 const r454bSuperheatService = require('../services/r454bSuperheatService');
 // BUG #7 FIXED: require() moved to top of file (was mid-file at line 540)
 const { convertToBarAbs, convertToCelsius, convertDeltaT } = require('../utils/unitConverter');
+const { transformCalculation } = require('../utils/transform');
+
 
 // Create new calculation
 exports.createCalculation = async (req, res) => {
@@ -39,7 +41,7 @@ exports.createCalculation = async (req, res) => {
     }
 
     // Verify project exists and belongs to user
-    const project = await Project.findOne({ _id: projectId, userId });
+    const project = await Project.findOne({ id: projectId, userId });
     if (!project) {
       return res.status(404).json({ error: 'Project not found' });
     }
@@ -125,7 +127,7 @@ exports.createCalculation = async (req, res) => {
       order: nextOrder
     });
 
-    res.status(201).json({ success: true, message: 'Calculation saved successfully', calculation });
+    res.status(201).json({ success: true, message: 'Calculation saved successfully', calculation: transformCalculation(calculation) });
   } catch (error) {
     console.error('Create calculation error:', error);
     res.status(500).json({ error: 'Failed to save calculation' });
@@ -146,7 +148,7 @@ exports.getCalculationsByProject = async (req, res) => {
 
     res.json({
       success: true,
-      calculations
+      calculations: calculations.map(transformCalculation)
     });
   } catch (error) {
     console.error('Get calculations error:', error);
@@ -167,7 +169,7 @@ exports.getCalculation = async (req, res) => {
 
     res.json({
       success: true,
-      calculation
+      calculation: transformCalculation(calculation)
     });
   } catch (error) {
     console.error('Get calculation error:', error);
@@ -266,7 +268,7 @@ exports.updateCalculation = async (req, res) => {
     res.json({
       success: true,
       message: 'Calculation updated successfully',
-      calculation
+      calculation: transformCalculation(calculation)
     });
   } catch (error) {
     console.error('Update calculation error:', error);

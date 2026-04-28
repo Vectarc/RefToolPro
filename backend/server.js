@@ -2,6 +2,8 @@ require('dotenv').config();
 const app = require('./app');
 const connectDB = require('./config/database');
 const pressureService = require('./services/pressureConversionService');
+const keepAlive = require('./utils/keepAlive');
+
 
 process.on('uncaughtException', (err) => {
   console.error('🔥 UNCAUGHT EXCEPTION:', err.message);
@@ -28,6 +30,11 @@ const startServer = async () => {
     app.listen(PORT, () => {
       console.log(`✅ RefTools-Pro Backend running on port ${PORT}`);
       console.log(`   API: http://localhost:${PORT}/api`);
+      
+      // Start keep-alive self-pings if on Render
+      if (process.env.RENDER_EXTERNAL_URL) {
+        keepAlive(process.env.RENDER_EXTERNAL_URL);
+      }
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error.message);

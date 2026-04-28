@@ -1,6 +1,8 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const compression = require('compression');
+
 
 // Routes
 const authRoutes = require('./routes/authRoutes');
@@ -13,6 +15,8 @@ const r513aRoutes = require('./routes/r513aRoutes');
 const r454bRoutes = require('./routes/r454bRoutes');
 
 const app = express();
+app.use(compression());
+
 
 // Middleware
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:3000').split(',').map(o => o.trim());

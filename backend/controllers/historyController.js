@@ -1,5 +1,7 @@
 // backend/controllers/historyController.js — Supabase version
 const History = require('../models/History');
+const { transformHistory } = require('../utils/transform');
+
 
 exports.createHistory = async (req, res) => {
   try {
@@ -15,7 +17,7 @@ exports.createHistory = async (req, res) => {
     }
 
     const historyEntry = await History.create(historyData);
-    res.status(201).json({ success: true, message: 'History saved successfully', history: historyEntry });
+    res.status(201).json({ success: true, message: 'History saved successfully', history: transformHistory(historyEntry) });
   } catch (error) {
     console.error('Create history error:', error);
     res.status(500).json({ error: 'Failed to save history' });
@@ -26,7 +28,7 @@ exports.getHistoryByUser = async (req, res) => {
   try {
     const userId = req.user.userId;
     const history = await History.findByUser({ userId });
-    res.json({ success: true, history });
+    res.json({ success: true, history: history.map(transformHistory) });
   } catch (error) {
     console.error('Get history error:', error);
     res.status(500).json({ error: 'Failed to fetch history' });

@@ -148,7 +148,7 @@ const ProjectModal = ({ isOpen, onClose, onProjectCreated, onProjectUpdated, edi
     try {
       if (editingProject) {
         const result = await updateProject(
-          editingProject._id,
+          editingProject.id,
           name.trim(),
           productType,
           stateCycle,

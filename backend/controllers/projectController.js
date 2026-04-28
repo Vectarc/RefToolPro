@@ -1,6 +1,8 @@
 // backend/controllers/projectController.js — Supabase version
 const Project = require('../models/Project');
 const Calculation = require('../models/Calculation');
+const { transformProject, transformCalculation } = require('../utils/transform');
+
 
 // Create new project
 exports.createProject = async (req, res) => {
@@ -40,7 +42,10 @@ exports.createProject = async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Project created successfully',
-      project: { ...project, initialCalculation }
+      project: { 
+        ...transformProject(project), 
+        initialCalculation: transformCalculation(initialCalculation) 
+      }
     });
   } catch (error) {
     console.error('Create project error:', error);
@@ -52,7 +57,7 @@ exports.createProject = async (req, res) => {
 exports.getProjects = async (req, res) => {
   try {
     const projects = await Project.find({ userId: req.user.userId });
-    res.json({ success: true, projects });
+    res.json({ success: true, projects: projects.map(transformProject) });
   } catch (error) {
     console.error('Get projects error:', error);
     res.status(500).json({ error: 'Failed to fetch projects' });
@@ -64,7 +69,7 @@ exports.getProject = async (req, res) => {
   try {
     const project = await Project.findOne({ id: req.params.id, userId: req.user.userId });
     if (!project) return res.status(404).json({ error: 'Project not found' });
-    res.json({ success: true, project });
+    res.json({ success: true, project: transformProject(project) });
   } catch (error) {
     console.error('Get project error:', error);
     res.status(500).json({ error: 'Failed to fetch project' });
@@ -91,7 +96,7 @@ exports.updateProject = async (req, res) => {
 
     const project = await Project.findByIdAndUpdate(req.params.id, req.user.userId, updateFields);
     if (!project) return res.status(404).json({ error: 'Project not found' });
-    res.json({ success: true, message: 'Project updated successfully', project });
+    res.json({ success: true, message: 'Project updated successfully', project: transformProject(project) });
   } catch (error) {
     console.error('Update project error:', error);
     res.status(500).json({ error: 'Failed to update project' });
@@ -158,7 +163,7 @@ exports.duplicateProject = async (req, res) => {
       try { await Calculation.insertMany(newCalcs); } catch (e) { console.error('Calc copy error:', e); }
     }
 
-    res.status(201).json({ success: true, message: 'Project duplicated successfully', project: newProject });
+    res.status(201).json({ success: true, message: 'Project duplicated successfully', project: transformProject(newProject) });
   } catch (error) {
     console.error('Duplicate project error:', error);
     res.status(500).json({ error: 'Server error: ' + (error.message || 'Unknown') });

@@ -16,7 +16,6 @@ const AddCycleStateModal = ({ isOpen, onClose, project, existingCalculations = [
       project?.lockedRefrigerant?.toUpperCase() === 'R454B');
 
 
-
   const currentTempUnit = (project?.lockedTemperatureUnit || temperatureUnit || 'celsius').toLowerCase();
   const tempLabel = currentTempUnit === 'fahrenheit' ? 'F' : 'C';
 
@@ -128,7 +127,7 @@ const AddCycleStateModal = ({ isOpen, onClose, project, existingCalculations = [
       isAbsolute: project?.lockedIsAbsolute !== undefined ? project.lockedIsAbsolute : isAbsolute,
       isDew: isDew,
       isManual: true,
-      projectId: project._id,
+      projectId: project.id,
       pressureUnit: project.lockedPressureUnit || pressureUnit,
       temperatureUnit: project.lockedTemperatureUnit || temperatureUnit,
       sequence: null,
@@ -147,7 +146,7 @@ const AddCycleStateModal = ({ isOpen, onClose, project, existingCalculations = [
         });
 
         if (onSuccess) {
-          onSuccess(project._id);
+          onSuccess(project.id);
         } else {
           await refreshProjects();
         }
