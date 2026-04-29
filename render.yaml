@@ -4,7 +4,7 @@ services:
     runtime: node
     rootDir: backend
     buildCommand: npm install
-    startCommand: npm start
+    startCommand:  npm install && pip install --upgrade pip setuptools wheel && pip install -r requirements.txt
     envVars:
       - key: NODE_ENV
         value: production
