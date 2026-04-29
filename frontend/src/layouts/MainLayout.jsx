@@ -3,7 +3,7 @@ import { LogOut, Database, Save, FolderOpen, Home, Calculator, History } from "l
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import "../styles/layout.css";
 import SettingsDrawer from "../components/SettingsDrawer/SettingsDrawer";
-import ThemeToggle from "../components/ThemeToggle/ThemeToggle";
+
 import ConfirmModal from "../components/ConfirmModal/ConfirmModal";
 import { getAltitudeData } from "../api";
 import { useProject } from "../context/ProjectContext";
@@ -152,10 +152,9 @@ const MainLayout = ({ userRole, userMode, onAdminPanelToggle, showCrudPanel, dev
   };
 
   const confirmLogout = () => {
-    // Clear authentication tokens and role
-    localStorage.removeItem('userToken');
-    localStorage.removeItem('userRole');
-    localStorage.removeItem('userMode');
+    // Clear all storage to prevent state leakage between users
+    localStorage.clear();
+    sessionStorage.clear();
     // Redirect to login page
     window.location.href = '/';
   };
@@ -200,7 +199,7 @@ const MainLayout = ({ userRole, userMode, onAdminPanelToggle, showCrudPanel, dev
         </div>
         <div className="header-title">{title}</div>
         <div className="header-actions">
-          <ThemeToggle />
+
           {location.pathname !== '/projects' && (
             <button
               className="header-btn header-settings"

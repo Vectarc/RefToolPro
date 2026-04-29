@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { User, Lock, ShieldCheck, UserCircle, CheckCircle, XCircle, Mail, Eye, EyeOff, Users } from 'lucide-react';
+import { User, Lock, ShieldCheck, UserCircle, CheckCircle, XCircle, Mail, Eye, EyeOff, Users, Wind } from 'lucide-react';
 import { getAuthUrl } from '../../config/apiConfig';
 import './LoginPage.css';
 
@@ -8,7 +8,7 @@ const LoginPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [loading, setLoading] = useState(false);  // ✅ NEW: Loading state
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -16,6 +16,16 @@ const LoginPage = () => {
   });
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState('');
+
+  // Update browser title and favicon for login page alone
+  useEffect(() => {
+    const prevTitle = document.title;
+    document.title = "Vectarc";
+    
+    return () => {
+      document.title = prevTitle;
+    };
+  }, []);
 
   const validatePassword = (password) => {
     return {
@@ -38,9 +48,8 @@ const LoginPage = () => {
   const handleSubmit = async () => {
     setErrors({});
     setMessage('');
-    setLoading(true);  // ✅ Start loading
+    setLoading(true);
 
-    // ✅ SECURITY FIX: Use backend API for admin authentication
     if (userType === 'admin' && isLogin) {
       try {
         const adminLoginUrl = getAuthUrl('admin-login');
@@ -60,7 +69,7 @@ const LoginPage = () => {
           localStorage.setItem('userRole', 'admin');
           setTimeout(() => window.location.reload(), 800);
         } else {
-          setErrors({ general: 'Invalid credentials' });  // ✅ Generic error
+          setErrors({ general: 'Invalid credentials' });
         }
       } catch (error) {
         console.error('Admin login error:', error);
@@ -74,20 +83,22 @@ const LoginPage = () => {
     if (userType === 'user' && !isLogin) {
       if (!isPasswordValid) {
         setErrors({ password: 'Password does not meet requirements' });
+        setLoading(false);
         return;
       }
       if (formData.password !== formData.confirmPassword) {
         setErrors({ confirmPassword: 'Passwords do not match' });
+        setLoading(false);
         return;
       }
       if (!formData.username || formData.username.length < 3) {
         setErrors({ username: 'Username must be at least 3 characters' });
+        setLoading(false);
         return;
       }
 
       try {
         const registerUrl = getAuthUrl('register');
-        console.log('Registering at:', registerUrl);
         const response = await fetch(registerUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -108,7 +119,7 @@ const LoginPage = () => {
         console.error('Registration error:', error);
         setErrors({ general: 'Server error. Please try again.' });
       } finally {
-        setLoading(false);  // ✅ Stop loading
+        setLoading(false);
       }
       return;
     }
@@ -116,7 +127,6 @@ const LoginPage = () => {
     if (userType === 'user' && isLogin) {
       try {
         const loginUrl = getAuthUrl('login');
-        console.log('Logging in at:', loginUrl);
         const response = await fetch(loginUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -128,10 +138,9 @@ const LoginPage = () => {
         const data = await response.json();
         if (response.ok) {
           setMessage('✅ Login successful!');
-          // Store the token and redirect
           localStorage.setItem('userToken', data.token);
           setTimeout(() => {
-            window.location.reload(); // Reload to trigger auth check in App.jsx
+            window.location.reload();
           }, 1000);
         } else {
           setErrors({ general: data.error || 'Invalid credentials' });
@@ -140,12 +149,10 @@ const LoginPage = () => {
         console.error('Login error:', error);
         setErrors({ general: 'Server error. Please try again.' });
       } finally {
-        setLoading(false);  // ✅ Stop loading
+        setLoading(false);
       }
     }
   };
-
-  // ✅ REMOVED: Copy/paste blocking prevents password managers (NIST 800-63B)
 
   const handleSwitchMode = (type) => {
     setUserType(type);
@@ -157,443 +164,270 @@ const LoginPage = () => {
     setShowConfirmPassword(false);
   };
 
-  const clearAllErrors = () => {
-    setErrors({});
-    setMessage('');
-    setFormData({ username: '', password: '', confirmPassword: '' });
-  };
-
   return (
     <div className="login-root">
-      <div className="login-card">
-        {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '2.5rem', animation: 'fadeInDown 0.7s ease' }}>
-          <div className="login-icon-box">
-            {userType === 'admin' ? <ShieldCheck size={32} /> : <User size={32} />}
+      {/* Branding Panel - Left Side */}
+      <div className="branding-panel">
+        <div className="branding-content">
+          <div className="company-logo">
+            <img src="/assets/favicon.png" alt="Vectarc Logo" style={{ width: '40px', height: '40px', objectFit: 'contain' }} />
+            <span>Vectarc</span>
           </div>
-          <h1 className="login-title">RefTools Pro</h1>
-          <p className="login-subtitle">HVAC Refrigerant Calculator System</p>
+          
+          <div className="hero-section">
+            
+            <h1>Precision Engineering</h1>
+            <p>
+              Precision Diagnostics for the Modern Technician. 
+              Vectarc delivers reliable HVAC/R performance 
+              tracking for high-stakes environments.
+            </p>
+          </div>
+          
+          <div className="branding-footer">
+            © 2026 Vectarc Precision System
+          </div>
         </div>
+      </div>
 
-        {/* Success Message */}
-        {message && (
-          <div className="success-message" style={{ justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <CheckCircle size={20} style={{ minWidth: '20px' }} />
+      {/* Login Form Panel - Right Side */}
+      <div className="login-form-panel">
+        <div className="login-card">
+          <div className="mobile-branding">
+            <img src="/assets/favicon.png" alt="Logo" style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
+            <span>Vectarc</span>
+          </div>
+          
+          <header className="login-header">
+            <div className={`mode-icon ${userType}`}>
+              {userType === 'admin' ? <ShieldCheck size={32} /> : <UserCircle size={32} />}
+            </div>
+            <h1 className="login-title">
+              {userType === 'admin' ? 'Admin Portal' : 'Welcome Back'}
+            </h1>
+            <p className="login-subtitle">
+              {userType === 'admin' 
+                ? 'Enter your administrative credentials to manage the system.' 
+                : 'Please enter your account details to access your dashboard.'}
+            </p>
+          </header>
+
+          {/* Success Message */}
+          {message && (
+            <div className="success-message">
+              <CheckCircle size={20} />
               <span>{message}</span>
             </div>
+          )}
+
+          {/* User Type Toggle */}
+          <div className="pill-toggle" role="tablist">
             <button
-              onClick={() => setMessage('')}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#059669',
-                cursor: 'pointer',
-                fontSize: '18px',
-                padding: '0 4px',
-                display: 'flex',
-                alignItems: 'center',
-                transition: 'all 0.2s ease'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.2)'}
-              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-              aria-label="Dismiss message"
+              onClick={() => handleSwitchMode('user')}
+              className={userType === 'user' ? 'active' : ''}
+              role="tab"
+              aria-selected={userType === 'user'}
             >
-              ×
+              <UserCircle size={18} />
+              User
+            </button>
+            <button
+              onClick={() => handleSwitchMode('admin')}
+              className={userType === 'admin' ? 'active' : ''}
+              role="tab"
+              aria-selected={userType === 'admin'}
+            >
+              <ShieldCheck size={18} />
+              Admin
             </button>
           </div>
-        )}
 
-        {/* User Type Toggle */}
-        <div className="pill-toggle" role="tablist" aria-label="Login mode">
-          <button
-            onClick={() => handleSwitchMode('user')}
-            role="tab"
-            aria-selected={userType === 'user'}
-            className={userType === 'user' ? 'active' : ''}
-          >
-            <UserCircle size={18} />
-            User
-          </button>
-          <button
-            onClick={() => handleSwitchMode('admin')}
-            role="tab"
-            aria-selected={userType === 'admin'}
-            className={userType === 'admin' ? 'active' : ''}
-          >
-            <ShieldCheck size={18} />
-            Admin
-          </button>
-        </div>
-
-        {/* Form */}
-        <div style={{ animation: 'fadeInUp 0.7s ease 0.2s both' }}>
-          {/* Username Field */}
-          <div className="form-group">
-            <label htmlFor="username">
-              {userType === 'admin' ? 'Admin ID' : 'Username'}
-            </label>
-            <div className="input-wrapper">
-              <input
-                id="username"
-                type="text"
-                name="username"
-                value={formData.username}
-                onChange={handleInputChange}
-                placeholder={userType === 'admin' ? 'Enter admin ID' : 'Enter your username'}
-                aria-label={userType === 'admin' ? 'Admin ID' : 'Username'}
-              />
-            </div>
-            {errors.username && (
-              <div className="error-message">
-                <XCircle size={16} style={{ minWidth: '16px' }} />
-                {errors.username}
+          {/* Form */}
+          <div className="login-form-body">
+            {/* Username Field */}
+            <div className="form-group">
+              <label htmlFor="username">
+                {userType === 'admin' ? 'Username' : 'Username'}
+              </label>
+              <div className="input-wrapper">
+                <input
+                  id="username"
+                  type="text"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleInputChange}
+                  placeholder={userType === 'admin' ? 'Enter your username' : 'Enter your username'}
+                />
               </div>
-            )}
-          </div>
-
-          {/* Password Field */}
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <div className="input-wrapper" style={{
-              position: 'relative',
-              background: showPassword ? 'rgba(245, 158, 11, 0.08)' : 'transparent',  // ✅ Visual warning
-              transition: 'background 0.3s ease',
-              borderRadius: 'var(--radius-sm)'
-            }}>
-              <input
-                id="password"
-                type={showPassword ? 'text' : 'password'}
-                name="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                placeholder="Enter your password"
-                aria-label="Password"
-                aria-describedby={userType === 'user' && !isLogin ? 'pw-requirements' : undefined}
-                style={{ paddingRight: '48px' }}
-                autoComplete="current-password"  // ✅ Allow password managers
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                style={{
-                  position: 'absolute',
-                  right: '16px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: '4px',
-                  color: '#9ca3af',
-                  display: 'flex',
-                  alignItems: 'center',
-                  transition: 'all 0.3s ease'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.color = '#667eea'}
-                onMouseLeave={(e) => e.currentTarget.style.color = '#9ca3af'}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-              >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-
-              {/* ✅ NEW: Password visibility warning */}
-              {showPassword && (
-                <div style={{
-                  position: 'absolute',
-                  bottom: '-26px',
-                  left: '0',
-                  fontSize: '11px',
-                  color: '#f59e0b',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  animation: 'fadeIn 0.2s ease'
-                }}>
-                  <span>⚠</span>
-                  <span>Password is visible</span>
+              {errors.username && (
+                <div className="error-message">
+                  <XCircle size={16} />
+                  {errors.username}
                 </div>
               )}
             </div>
-            {errors.password && (
-              <div className="error-message">
-                <XCircle size={16} style={{ minWidth: '16px' }} />
-                {errors.password}
-              </div>
-            )}
 
-            {/* Admin Helper Text */}
-            {userType === 'admin' && isLogin && (
-              <div style={{
-                marginTop: '12px',
-                padding: '12px',
-                background: 'linear-gradient(135deg, #f0f9ff 0%, #ecfdf5 100%)',
-                border: '1px solid #cffafe',
-                borderRadius: '10px',
-                fontSize: '13px',
-                color: '#047857',
-                fontWeight: '500'
-              }}>
-                <p style={{ margin: '0 0 4px 0', fontWeight: '600' }}>Admin Login</p>
-                <p style={{ margin: '0', fontSize: '12px' }}>Use your admin credentials to access the admin panel.</p>
-              </div>
-            )}
-
-            {/* Password Requirements Checklist */}
-            {userType === 'user' && !isLogin && (
-              <div id="pw-requirements" style={{
-                marginTop: '12px',
-                padding: '12px',
-                background: 'linear-gradient(135deg, #f0f9ff 0%, #ecfdf5 100%)',
-                border: '1px solid #cffafe',
-                borderRadius: '10px',
-                animation: 'scaleIn 0.4s ease'
-              }} aria-live="polite">
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  fontSize: '13px',
-                  color: passwordChecks.length ? '#047857' : '#9ca3af',
-                  marginBottom: '6px',
-                  transition: 'all 0.2s ease'
-                }}>
-                  {passwordChecks.length ? (
-                    <CheckCircle size={18} style={{ color: '#10b981', minWidth: '18px' }} />
-                  ) : (
-                    <XCircle size={18} style={{ color: '#d1d5db', minWidth: '18px' }} />
-                  )}
-                  <span>Exactly 12 characters</span>
-                </div>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  fontSize: '13px',
-                  color: passwordChecks.uppercase ? '#047857' : '#9ca3af',
-                  marginBottom: '6px',
-                  transition: 'all 0.2s ease'
-                }}>
-                  {passwordChecks.uppercase ? (
-                    <CheckCircle size={18} style={{ color: '#10b981', minWidth: '18px' }} />
-                  ) : (
-                    <XCircle size={18} style={{ color: '#d1d5db', minWidth: '18px' }} />
-                  )}
-                  <span>At least 1 uppercase letter</span>
-                </div>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  fontSize: '13px',
-                  color: passwordChecks.number ? '#047857' : '#9ca3af',
-                  marginBottom: '6px',
-                  transition: 'all 0.2s ease'
-                }}>
-                  {passwordChecks.number ? (
-                    <CheckCircle size={18} style={{ color: '#10b981', minWidth: '18px' }} />
-                  ) : (
-                    <XCircle size={18} style={{ color: '#d1d5db', minWidth: '18px' }} />
-                  )}
-                  <span>At least 1 number</span>
-                </div>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  fontSize: '13px',
-                  color: passwordChecks.special ? '#047857' : '#9ca3af',
-                  marginBottom: 0,
-                  transition: 'all 0.2s ease'
-                }}>
-                  {passwordChecks.special ? (
-                    <CheckCircle size={18} style={{ color: '#10b981', minWidth: '18px' }} />
-                  ) : (
-                    <XCircle size={18} style={{ color: '#d1d5db', minWidth: '18px' }} />
-                  )}
-                  <span>At least 1 special character</span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Confirm Password Field (Signup Only) */}
-          {userType === 'user' && !isLogin && (
+            {/* Password Field */}
             <div className="form-group">
-              <label htmlFor="confirmPassword">Confirm Password</label>
+              <label htmlFor="password">Password</label>
               <div className="input-wrapper" style={{ position: 'relative' }}>
                 <input
-                  id="confirmPassword"
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  value={formData.password}
                   onChange={handleInputChange}
-                  placeholder="Confirm your password"
-                  aria-label="Confirm password"
+                  placeholder="••••••••"
                   style={{ paddingRight: '48px' }}
-                  autoComplete="new-password"  // ✅ Allow password managers
                 />
                 <button
                   type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  onClick={() => setShowPassword(!showPassword)}
                   style={{
                     position: 'absolute',
-                    right: '16px',
+                    right: '12px',
                     top: '50%',
                     transform: 'translateY(-50%)',
                     background: 'none',
                     border: 'none',
                     cursor: 'pointer',
-                    padding: '4px',
-                    color: '#9ca3af',
-                    display: 'flex',
-                    alignItems: 'center',
-                    transition: 'all 0.3s ease'
+                    color: '#94A3B8'
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.color = '#667eea'}
-                  onMouseLeave={(e) => e.currentTarget.style.color = '#9ca3af'}
-                  aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
                 >
-                  {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
-              {errors.confirmPassword && (
+              {errors.password && (
                 <div className="error-message">
-                  <XCircle size={16} style={{ minWidth: '16px' }} />
-                  {errors.confirmPassword}
+                  <XCircle size={16} />
+                  {errors.password}
                 </div>
               )}
             </div>
-          )}
 
-          {/* General Error Message */}
-          {errors.general && (
-            <div className="error-message" style={{ marginBottom: '1.5rem', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <XCircle size={16} style={{ minWidth: '16px' }} />
+            {/* Confirm Password Field (Signup Only) */}
+            {!isLogin && (
+              <div className="form-group">
+                <label htmlFor="confirmPassword">Confirm Password</label>
+                <div className="input-wrapper" style={{ position: 'relative' }}>
+                  <input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    name="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleInputChange}
+                    placeholder="••••••••"
+                    style={{ paddingRight: '48px' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    style={{
+                      position: 'absolute',
+                      right: '12px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: '#94A3B8'
+                    }}
+                  >
+                    {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
+                {errors.confirmPassword && (
+                  <div className="error-message">
+                    <XCircle size={16} />
+                    {errors.confirmPassword}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Password Requirements Checklist (Signup) */}
+            {userType === 'user' && !isLogin && (
+              <div id="pw-requirements" className="pw-requirements-box" style={{
+                marginBottom: '1.5rem',
+                padding: '12px',
+                background: '#F8FAFC',
+                borderRadius: '8px',
+                border: '1px solid #E2E8F0',
+                fontSize: '0.8rem'
+              }}>
+                <div style={{ color: passwordChecks.length ? '#10B981' : '#94A3B8', display: 'flex', gap: '8px', marginBottom: '4px' }}>
+                  {passwordChecks.length ? <CheckCircle size={14} /> : <XCircle size={14} />} Exactly 12 characters
+                </div>
+                <div style={{ color: passwordChecks.uppercase ? '#10B981' : '#94A3B8', display: 'flex', gap: '8px', marginBottom: '4px' }}>
+                  {passwordChecks.uppercase ? <CheckCircle size={14} /> : <XCircle size={14} />} 1 Uppercase letter
+                </div>
+                <div style={{ color: passwordChecks.number ? '#10B981' : '#94A3B8', display: 'flex', gap: '8px', marginBottom: '4px' }}>
+                  {passwordChecks.number ? <CheckCircle size={14} /> : <XCircle size={14} />} 1 Number
+                </div>
+                <div style={{ color: passwordChecks.special ? '#10B981' : '#94A3B8', display: 'flex', gap: '8px' }}>
+                  {passwordChecks.special ? <CheckCircle size={14} /> : <XCircle size={14} />} 1 Special character
+                </div>
+              </div>
+            )}
+
+            {/* General Error Message */}
+            {errors.general && (
+              <div className="error-message">
+                <XCircle size={16} />
                 {errors.general}
               </div>
-              <button
-                onClick={() => setErrors({ ...errors, general: '' })}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#dc2626',
-                  cursor: 'pointer',
-                  fontSize: '18px',
-                  padding: '0 4px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.2)'}
-                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                aria-label="Dismiss error"
-              >
-                ×
-              </button>
-            </div>
-          )}
-
-          {/* Submit Button */}
-          <button
-            onClick={handleSubmit}
-            disabled={loading || (userType === 'user' && !isLogin && !isPasswordValid)}  // ✅ Disable during loading
-            className="submit-button"
-            title={
-              userType === 'user' && !isLogin && !isPasswordValid
-                ? 'Please meet all password requirements to continue'
-                : ''
-            }
-            style={{ position: 'relative' }}
-          >
-            {loading ? (
-              <>
-                <span style={{
-                  display: 'inline-block',
-                  width: '14px',
-                  height: '14px',
-                  border: '2px solid rgba(255, 255, 255, 0.3)',
-                  borderTopColor: '#fff',
-                  borderRadius: '50%',
-                  animation: 'spin 0.6s linear infinite',
-                  marginRight: '8px'
-                }}></span>
-                {isLogin ? 'Signing in...' : 'Creating account...'}
-              </>
-            ) : (
-              isLogin ? 'Sign In' : 'Create Account'
             )}
-          </button>
 
-          {/* Disabled State Helper */}
-          {userType === 'user' && !isLogin && !isPasswordValid && (
-            <div style={{
-              marginTop: '12px',
-              padding: '10px 12px',
-              background: 'rgba(245, 158, 11, 0.1)',
-              border: '1px solid rgba(245, 158, 11, 0.3)',
-              borderRadius: '8px',
-              fontSize: '13px',
-              color: '#f59e0b',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
-              <span style={{ fontSize: '18px' }}>ⓘ</span>
-              <span>Complete all password requirements above to create your account</span>
-            </div>
-          )}
-        </div>
-
-        {/* Toggle Login/Signup (User Only) */}
-        {userType === 'user' && (
-          <>
-            <div className="toggle-link">
-              {isLogin ? "Don't have an account? " : 'Already have an account? '}
-              <button
-                onClick={() => {
-                  setIsLogin(!isLogin);
-                  setFormData({ username: '', password: '', confirmPassword: '' });
-                  setErrors({});
-                  setMessage('');
-                  setShowPassword(false);
-                  setShowConfirmPassword(false);
-                }}
-              >
-                {isLogin ? 'Sign up' : 'Sign in'}
-              </button>
-            </div>
-
-            <div className="guest-login-divider">
-              <span>OR</span>
-            </div>
-
+            {/* Submit Button */}
             <button
-              className="guest-login-btn"
-              onClick={() => {
-                localStorage.setItem('userMode', 'guest');
-                localStorage.setItem('userRole', 'user');
-                localStorage.setItem('userToken', 'guest-token'); // Dummy token
-                window.location.reload();
-              }}
+              onClick={handleSubmit}
+              disabled={loading || (userType === 'user' && !isLogin && !isPasswordValid)}
+              className="submit-button"
             >
-              <Users size={18} />
-              Login as Guest
+              {loading ? (
+                <span className="spinner" style={{ 
+                  display: 'inline-block', 
+                  width: '18px', 
+                  height: '18px', 
+                  border: '2px solid rgba(255,255,255,0.3)', 
+                  borderTopColor: '#fff', 
+                  borderRadius: '50%', 
+                  animation: 'spin 0.6s linear infinite' 
+                }}></span>
+              ) : (
+                isLogin ? 'Sign In' : 'Create Account'
+              )}
             </button>
-          </>
-        )}
 
-        {/* Footer */}
-        <div style={{
-          textAlign: 'center',
-          marginTop: '2rem',
-          fontSize: '12px',
-          color: '#9ca3af',
-          borderTop: '1px solid #e5e7eb',
-          paddingTop: '1.5rem'
-        }}>
+            {/* User Toggle Link */}
+            {userType === 'user' && (
+              <>
+                <div className="toggle-link">
+                  {isLogin ? "New to the platform?" : "Already have an account?"}
+                  <button onClick={() => setIsLogin(!isLogin)}>
+                    {isLogin ? "Sign up" : "Sign in"}
+                  </button>
+                </div>
 
+                <div className="guest-login-divider">
+                  <span>OR</span>
+                </div>
+
+                <button
+                  className="guest-login-btn"
+                  onClick={() => {
+                    localStorage.setItem('userMode', 'guest');
+                    localStorage.setItem('userRole', 'user');
+                    localStorage.setItem('userToken', 'guest-token');
+                    window.location.reload();
+                  }}
+                >
+                  <Users size={18} />
+                  Login as Guest
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>

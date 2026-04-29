@@ -3,31 +3,22 @@ import React, { createContext, useState, useEffect } from 'react';
 export const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(false); // Force light mode
 
-  // Load theme preference from localStorage on mount
+  // Save light mode preference to localStorage and apply to document
   useEffect(() => {
-    const savedTheme = localStorage.getItem('themeMode');
-    if (savedTheme === 'light') {
-      setIsDarkMode(false);
-    } else {
-      setIsDarkMode(true);
-    }
-  }, []);
-
-  // Save theme preference to localStorage and apply to document
-  useEffect(() => {
-    const theme = isDarkMode ? 'dark' : 'light';
+    const theme = 'light';
     localStorage.setItem('themeMode', theme);
     document.documentElement.setAttribute('data-theme', theme);
-  }, [isDarkMode]);
+  }, []);
 
   const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
+    // Disabled functionality
+    console.log('Theme toggle is disabled. Staying in light mode.');
   };
 
   return (
-    <ThemeContext.Provider value={{ isDarkMode, toggleTheme }}>
+    <ThemeContext.Provider value={{ isDarkMode: false, toggleTheme }}>
       {children}
     </ThemeContext.Provider>
   );
