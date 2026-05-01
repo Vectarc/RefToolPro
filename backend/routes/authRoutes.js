@@ -38,8 +38,10 @@ router.post('/register', async (req, res) => {
 
       const user = await User.create({ username, email, password });
       
-      // Send notification to admin
-      await emailService.sendAdminNotification({ username, email });
+      // Send notification to admin (non-blocking for faster user experience)
+      emailService.sendAdminNotification({ username, email }).catch(err => 
+        console.error('[Registration] Background Email Error:', err)
+      );
 
       return res.status(201).json({ 
         success: true, 
@@ -152,9 +154,11 @@ router.post('/approve-request', verifyAdmin, async (req, res) => {
 
     const user = await User.approve(userId);
     
-    // Notify the user
+    // Notify the user (non-blocking)
     if (user && user.email) {
-      await emailService.sendApprovalNotification(user.email, user.username);
+      emailService.sendApprovalNotification(user.email, user.username).catch(err =>
+        console.error('[Approval] Background Email Error:', err)
+      );
     }
 
     res.json({ success: true, message: 'User approved successfully' });
