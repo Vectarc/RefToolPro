@@ -146,7 +146,7 @@ const EnthalpyCell = ({ calc, isAbsolute, ambientPressureData }) => {
   return <span>{val !== null ? val.toFixed(1) : '-'}</span>;
 };
 
-const ProjectDashboard = () => {
+const ProjectDashboard = ({ autoOpenModal }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const context = useOutletContext() || {};
@@ -206,8 +206,8 @@ const ProjectDashboard = () => {
       window.history.replaceState({}, document.title);
     }
 
-    // Check for openModal trigger from Landing Page
-    if (location.state?.openModal) {
+    // Check for openModal trigger from Landing Page or /newproject route
+    if (location.state?.openModal || autoOpenModal) {
       setShowProjectModal(true);
       // Clear the state to avoid re-opening on manual refresh
       window.history.replaceState({}, document.title);

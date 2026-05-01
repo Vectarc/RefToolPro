@@ -10,7 +10,7 @@ import { useProject } from "../context/ProjectContext";
 
 
 
-const MainLayout = ({ userRole, userMode, onAdminPanelToggle, showCrudPanel, deviceType, isMobileAdminAvailable }) => {
+const MainLayout = ({ userRole, userMode, onResetMode, onAdminPanelToggle, showCrudPanel, deviceType, isMobileAdminAvailable }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { triggerSave, canSave, activeCalculation, activeProject } = useProject();
@@ -145,9 +145,11 @@ const MainLayout = ({ userRole, userMode, onAdminPanelToggle, showCrudPanel, dev
       // For guest users, clicking Home should logout and return to login page
       confirmLogout();
     } else {
-      localStorage.removeItem('userMode');
-      // Using window.location.href to force a full refresh and trigger the App.jsx re-render for mode selection
-      window.location.href = '/';
+      // Use React state to reset mode and navigate — avoids full page reload
+      if (onResetMode) {
+        onResetMode();
+      }
+      navigate('/');
     }
   };
 
@@ -188,14 +190,16 @@ const MainLayout = ({ userRole, userMode, onAdminPanelToggle, showCrudPanel, dev
     <div className="main-layout">
       <div className="header-bar">
         <div className="header-left-area">
-          <button
-            className="header-btn header-nav-home"
-            onClick={handleGoHome}
-            title="Go to Home Page"
-          >
-            <Home size={18} />
-            <span>Home</span>
-          </button>
+          {!isAdmin && !isGuest && (
+            <button
+              className="header-btn header-nav-home"
+              onClick={handleGoHome}
+              title="Go to Home Page"
+            >
+              <Home size={18} />
+              <span>Home</span>
+            </button>
+          )}
         </div>
         <div className="header-title">{title}</div>
         <div className="header-actions">

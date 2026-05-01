@@ -66,6 +66,11 @@ const LoginPage = () => {
 
         if (response.ok) {
           setMessage('✅ Login successful! Redirecting...');
+          const hasVisited = localStorage.getItem('hasVisitedRefToolsPro');
+          localStorage.clear();
+          sessionStorage.clear();
+          if (hasVisited) localStorage.setItem('hasVisitedRefToolsPro', hasVisited);
+          
           localStorage.setItem('userToken', data.token);
           localStorage.setItem('userRole', 'admin');
           setTimeout(() => window.location.reload(), 800);
@@ -145,6 +150,11 @@ const LoginPage = () => {
         const data = await response.json();
         if (response.ok) {
           setMessage('✅ Login successful!');
+          const hasVisited = localStorage.getItem('hasVisitedRefToolsPro');
+          localStorage.clear();
+          sessionStorage.clear();
+          if (hasVisited) localStorage.setItem('hasVisitedRefToolsPro', hasVisited);
+
           localStorage.setItem('userToken', data.token);
           setTimeout(() => {
             window.location.reload();
@@ -447,6 +457,11 @@ const LoginPage = () => {
                 <button
                   className="guest-login-btn"
                   onClick={() => {
+                    const hasVisited = localStorage.getItem('hasVisitedRefToolsPro');
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    if (hasVisited) localStorage.setItem('hasVisitedRefToolsPro', hasVisited);
+                    
                     localStorage.setItem('userMode', 'guest');
                     localStorage.setItem('userRole', 'user');
                     localStorage.setItem('userToken', 'guest-token');

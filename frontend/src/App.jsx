@@ -27,6 +27,7 @@ export const DeviceContext = createContext();
 function App() {
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [userRole, setUserRole] = useState(null);
   const [showCrudPanel, setShowCrudPanel] = useState(false);
   const deviceType = useDeviceType();
@@ -38,11 +39,11 @@ function App() {
 
     // Proper navigation based on mode
     if (mode === 'new-project') {
-      navigate('/projects', { state: { openModal: true } });
+      navigate('/newproject');
     } else if (mode === 'projects') {
       navigate('/projects');
     } else if (mode === 'dashboard' || mode === 'dashboard-project') {
-      navigate('/');
+      navigate('/quickslide');
     }
   };
 
@@ -56,6 +57,7 @@ function App() {
       if (token === 'guest-token') {
         setIsAuthenticated(true);
         setUserRole('user');
+        setIsAuthChecking(false);
         return;
       }
 
@@ -63,6 +65,7 @@ function App() {
       if (role === 'admin') {
         setIsAuthenticated(true);
         setUserRole('admin');
+        setIsAuthChecking(false);
       } else {
         // For regular users, verify token with backend
         const verifyUrl = getAuthUrl('verify');
@@ -88,8 +91,13 @@ function App() {
             localStorage.removeItem('userRole');
             localStorage.removeItem('userMode');
             setIsAuthenticated(false);
+          })
+          .finally(() => {
+            setIsAuthChecking(false);
           });
       }
+    } else {
+      setIsAuthChecking(false);
     }
   }, []);
 
@@ -100,7 +108,10 @@ function App() {
           <ProjectProvider>
             <DeviceContext.Provider value={{ deviceType }}>
               <Routes>
-                {!isAuthenticated ? (
+                {isAuthChecking ? (
+                  // Still verifying auth — show nothing to avoid login flash
+                  <Route path="*" element={<div />} />
+                ) : !isAuthenticated ? (
                   // Not authenticated: always show login
                   <Route path="*" element={<LoginPage />} />
                 ) : userRole === 'admin' ? (
@@ -133,10 +144,12 @@ function App() {
                   <Route path="*" element={<ModeSelection onSelectMode={handleSelectMode} />} />
                 ) : (
                   // Regular user routes - once mode is selected, allow free navigation
-                  <Route element={<MainLayout userRole={userRole} userMode={userMode} deviceType={deviceType} />}>
+                  <Route element={<MainLayout userRole={userRole} userMode={userMode} onResetMode={() => { setUserMode(null); localStorage.removeItem('userMode'); }} deviceType={deviceType} />}>
+                    <Route path="/newproject" element={(userMode || 'dashboard') === 'guest' ? <Navigate to="/" replace /> : <ProjectDashboard autoOpenModal />} />
                     <Route path="/projects" element={(userMode || 'dashboard') === 'guest' ? <Navigate to="/" replace /> : <ProjectDashboard />} />
                     <Route path="/history" element={(userMode || 'dashboard') === 'guest' ? <Navigate to="/" replace /> : <HistoryPage />} />
                     <Route path="/thermoplot/:projectId" element={<ThermoplotPage />} />
+                    <Route path="/quickslide" element={<RefrigerantCalculatorWrapper />} />
                     <Route path="/" element={<RefrigerantCalculatorWrapper />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Route>
