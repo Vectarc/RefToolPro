@@ -64,6 +64,7 @@ const ThermoplotPage = () => {
   const [plotData, setPlotData] = useState(null);
   const [refrigerant, setRefrigerant] = useState('R407C');
   const [loading, setLoading] = useState(true);
+  const [isPreciseLoading, setIsPreciseLoading] = useState(false);
   const [showIsolines, setShowIsolines] = useState(true);
   const [preciseGraphData, setPreciseGraphData] = useState(null);
 
@@ -75,9 +76,18 @@ const ThermoplotPage = () => {
       if (parsed.projectId === projectId) {
         setPlotData(parsed);
         if (parsed.calculations.length > 0) {
-          setRefrigerant(parsed.calculations[0].refrigerant.toUpperCase());
+          const ref = parsed.calculations[0].refrigerant.toUpperCase();
+          setRefrigerant(ref);
+          
+          // If we have precise data for this ref, start loading it
+          if (REF_FILE_MAP[ref]) {
+            setIsPreciseLoading(true);
+          } else {
+            setLoading(false);
+          }
+        } else {
+          setLoading(false);
         }
-        setLoading(false);
         return;
       }
     }
@@ -92,6 +102,7 @@ const ThermoplotPage = () => {
 
       if (fileName) {
         try {
+          setIsPreciseLoading(true);
           // Dynamic import from src/graphdata
           const data = await import(`../../graphdata/${fileName}`);
           setPreciseGraphData(data.default || data);
@@ -99,16 +110,22 @@ const ThermoplotPage = () => {
         } catch (error) {
           console.error(`Failed to load precise data for ${refrigerant}:`, error);
           setPreciseGraphData(null);
+        } finally {
+          setIsPreciseLoading(false);
+          setLoading(false);
         }
       } else {
         setPreciseGraphData(null);
+        setIsPreciseLoading(false);
+        // Only set loading false if we have plotData
+        if (plotData) setLoading(false);
       }
     };
 
     if (refrigerant) {
       loadPreciseData();
     }
-  }, [refrigerant]);
+  }, [refrigerant, plotData]);
 
   // Fetch accurate cycle data from API if only basic calculations are present
   useEffect(() => {
@@ -360,7 +377,7 @@ const chartData = useMemo(() => {
   };
 }, [plotData, refrigerant, preciseGraphData]);
 
-if (loading || !chartData) {
+  if (loading || isPreciseLoading || !chartData) {
   return (
     <div className="thermoplot-loading">
       <RefreshCw className="spinner" />
