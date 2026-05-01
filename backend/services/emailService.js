@@ -13,6 +13,7 @@ const transporter = nodemailer.createTransport({
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
+  family: 4, // Force IPv4 to avoid ENETUNREACH on IPv6
 });
 
 // Verify connection configuration
@@ -29,14 +30,21 @@ const emailService = {
    * Send notification to admin about new account request
    */
   async sendAdminNotification(userDetails) {
-    if (!process.env.ADMIN_EMAIL) {
-        console.warn('ADMIN_EMAIL not set, skipping email notification');
+    const adminEmail = process.env.ADMIN_EMAIL || process.env.admin_email;
+    
+    if (!adminEmail) {
+        console.warn('⚠️ [EmailService] ADMIN_EMAIL not set in environment variables. Skipping admin notification.');
+        return;
+    }
+
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+        console.error('❌ [EmailService] SMTP credentials (EMAIL_USER/EMAIL_PASS) are missing. Cannot send mail.');
         return;
     }
 
     const mailOptions = {
       from: `"Vectarc System" <${process.env.EMAIL_USER}>`,
-      to: process.env.ADMIN_EMAIL,
+      to: adminEmail,
       subject: 'New Account Creation Request',
       html: `
         <h2>New Account Request</h2>
@@ -50,8 +58,9 @@ const emailService = {
     };
 
     try {
+      console.log(`[EmailService] Attempting to send admin notification to: ${adminEmail}`);
       await transporter.sendMail(mailOptions);
-      console.log('Admin notification email sent');
+      console.log('✅ [EmailService] Admin notification email sent successfully');
     } catch (error) {
       console.error('Error sending admin notification email:', error);
     }

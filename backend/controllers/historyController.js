@@ -6,7 +6,28 @@ const { transformHistory } = require('../utils/transform');
 exports.createHistory = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const historyData = { ...req.body, user_id: userId };
+    const {
+      refrigerant, pressure, pressure_unit, pressureUnit,
+      temperature, temperature_unit, temperatureUnit,
+      is_dew, isDew, is_absolute, isAbsolute,
+      result_enthalpy, resultEnthalpy,
+      result_entropy, resultEntropy,
+      result_density, resultDensity
+    } = req.body;
+
+    const historyData = {
+      user_id: userId,
+      refrigerant,
+      pressure,
+      pressure_unit: pressure_unit || pressureUnit,
+      temperature,
+      temperature_unit: temperature_unit || temperatureUnit,
+      is_dew: is_dew !== undefined ? is_dew : isDew,
+      is_absolute: is_absolute !== undefined ? is_absolute : isAbsolute,
+      result_enthalpy: result_enthalpy || resultEnthalpy,
+      result_entropy: result_entropy || resultEntropy,
+      result_density: result_density || resultDensity
+    };
 
     // FIFO: keep max 10 entries per user
     const historyCount = await History.count({ userId });
