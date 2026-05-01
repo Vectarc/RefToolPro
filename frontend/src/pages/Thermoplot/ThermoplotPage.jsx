@@ -12,7 +12,7 @@ import {
   calculateDischargeGasTemp as calcDischargeTempR513A,
   calculateLiquidTemp as calcLiquidTempR513A
 } from '../../utils/thermoR513A';
-import { ArrowLeft, RefreshCw, Settings, Layers, Info, ArrowDown } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Settings, Layers, Info, ArrowDown, Wind } from 'lucide-react';
 import {
   generateVaporDome,
   generateIsotherms,
@@ -383,13 +383,21 @@ const chartData = useMemo(() => {
 }, [plotData, refrigerant, preciseGraphData]);
 
   if (loading || isPreciseLoading || !chartData) {
-  return (
-    <div className="thermoplot-loading">
-      <RefreshCw className="spinner" />
-      <p>Loading thermodynamic data...</p>
-    </div>
-  );
-}
+    return (
+      <div className="thermoplot-loading">
+        <div className="loader-container">
+          <div className="loader-outer"></div>
+          <div className="loader-inner">
+            <Wind size={24} />
+          </div>
+        </div>
+        <div className="loading-text-group">
+          <p className="loading-main-text">Calculating Cycle Dynamics</p>
+          <p className="loading-sub-text">Optimizing thermodynamic points for {refrigerant}...</p>
+        </div>
+      </div>
+    );
+  }
 
 const plotTraces = [];
 
