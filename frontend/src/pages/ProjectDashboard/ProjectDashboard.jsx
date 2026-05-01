@@ -43,9 +43,9 @@ const getAutomatedCustomValue = (calc, allCalculations, project, field, globalTe
   const kFactor = unit === 'fahrenheit' ? 1.8 : 1.0;
 
   // Find the master relative values in this project
-  const subcoolingRow = allCalculations.find(c => c.defineStateCycle.includes('Condenser Subcooling'));
-  const evapSuperheatRow = allCalculations.find(c => c.defineStateCycle.includes('Evaporator Superheat'));
-  const compSuperheatRow = allCalculations.find(c => c.defineStateCycle.includes('Compressor Superheat'));
+  const subcoolingRow = allCalculations.find(c => c.defineStateCycle?.includes('Condenser Subcooling'));
+  const evapSuperheatRow = allCalculations.find(c => c.defineStateCycle?.includes('Evaporator Superheat'));
+  const compSuperheatRow = allCalculations.find(c => c.defineStateCycle?.includes('Compressor Superheat'));
 
   const scVal = subcoolingRow?.inputValue;
   const evapSHVal = evapSuperheatRow?.inputValue;
@@ -360,41 +360,41 @@ const ProjectDashboard = () => {
             const currentTempUnit = (currentProject?.lockedTemperatureUnit || temperatureUnit || 'celsius').toLowerCase();
             const isFahrenheit = currentTempUnit === 'fahrenheit';
 
-            const findIdx = (type) => projectCalcs.findIndex(c => c.defineStateCycle.includes(type));
+            const findIdx = (type) => projectCalcs.findIndex(c => c.defineStateCycle?.includes(type));
             const sctIdx = projectCalcs.findIndex(c =>
-              c.defineStateCycle.includes('Saturated Condensation Temperature (SCT)') ||
-              c.defineStateCycle.includes('Saturated Condensation Pressure (SCP)')
+              c.defineStateCycle?.includes('Saturated Condensation Temperature (SCT)') ||
+              c.defineStateCycle?.includes('Saturated Condensation Pressure (SCP)')
             );
             const setIdx = projectCalcs.findIndex(c =>
-              c.defineStateCycle.includes('Saturated Evaporator Temperature (SET)') ||
-              c.defineStateCycle.includes('Saturated Evaporation Pressure (SEP)')
+              c.defineStateCycle?.includes('Saturated Evaporator Temperature (SET)') ||
+              c.defineStateCycle?.includes('Saturated Evaporation Pressure (SEP)')
             );
             const liqIdx = findIdx('Liquid temperature');
             const subIdx = projectCalcs.findIndex(c =>
-              c.defineStateCycle.includes('Condenser Subcooling')
+              c.defineStateCycle?.includes('Condenser Subcooling')
             );
 
             const sct = sctIdx !== -1 ? parseFloat(projectCalcs[sctIdx].temperature) : NaN;
             const set = setIdx !== -1 ? parseFloat(projectCalcs[setIdx].temperature) : NaN;
 
-            if (targetCalc.defineStateCycle.includes('Compressor Superheat') && sctIdx !== -1 && !isNaN(sct)) {
+            if (targetCalc.defineStateCycle?.includes('Compressor Superheat') && sctIdx !== -1 && !isNaN(sct)) {
               // Formula 6: Discharge Gas Temperature = SCT + Compressor Superheat (Direct unit)
               const dischargeTemp = numValue === null ? null : sct + numValue;
               projectCalcs[sctIdx] = { ...projectCalcs[sctIdx], actualTemperature: dischargeTemp };
               updateCalculation(projectCalcs[sctIdx]._id, { actualTemperature: dischargeTemp });
-            } else if (targetCalc.defineStateCycle.includes('Evaporator Superheat') && setIdx !== -1 && !isNaN(set)) {
+            } else if (targetCalc.defineStateCycle?.includes('Evaporator Superheat') && setIdx !== -1 && !isNaN(set)) {
               // Formula 4: Suction Gas Temperature = (1.8* Evaporator Superheat) + SET
               const deltaT = isFahrenheit ? (numValue === null ? null : numValue * 1.8) : numValue;
               const suctionTemp = (numValue === null || isNaN(set)) ? null : set + deltaT;
               projectCalcs[setIdx] = { ...projectCalcs[setIdx], actualTemperature: suctionTemp };
               updateCalculation(projectCalcs[setIdx]._id, { actualTemperature: suctionTemp });
-            } else if (targetCalc.defineStateCycle.includes('Condenser Subcooling') && sctIdx !== -1 && !isNaN(sct) && liqIdx !== -1) {
+            } else if (targetCalc.defineStateCycle?.includes('Condenser Subcooling') && sctIdx !== -1 && !isNaN(sct) && liqIdx !== -1) {
               // Formula 5: Liquid Temperature = SCT - (1.8 * Condenser Subcooling)
               const deltaT = isFahrenheit ? (numValue === null ? null : numValue * 1.8) : numValue;
               const lTemp = (numValue === null || isNaN(sct)) ? null : sct - deltaT;
               projectCalcs[liqIdx] = { ...projectCalcs[liqIdx], inputValue: lTemp };
               updateCalculation(projectCalcs[liqIdx]._id, { inputValue: lTemp });
-            } else if (targetCalc.defineStateCycle.includes('Liquid temperature') && sctIdx !== -1 && !isNaN(sct) && subIdx !== -1) {
+            } else if (targetCalc.defineStateCycle?.includes('Liquid temperature') && sctIdx !== -1 && !isNaN(sct) && subIdx !== -1) {
               // Formula 2: Condenser Subcooling = 1.0 (or 5/9 if F) * (SCT - Liquid Temperature)
               let subVal = numValue === null ? null : sct - numValue; // difference in display unit
               const subValK = (subVal === null || isNaN(subVal)) ? null : (isFahrenheit ? subVal * 5 / 9 : subVal);
@@ -444,29 +444,29 @@ const ProjectDashboard = () => {
             const isFahrenheit = currentTempUnit === 'fahrenheit';
 
             const sctIdx = projectCalcs.findIndex(c =>
-              c.defineStateCycle.includes('Saturated Condensation Temperature (SCT)') ||
-              c.defineStateCycle.includes('Saturated Condensation Pressure (SCP)')
+              c.defineStateCycle?.includes('Saturated Condensation Temperature (SCT)') ||
+              c.defineStateCycle?.includes('Saturated Condensation Pressure (SCP)')
             );
             const setIdx = projectCalcs.findIndex(c =>
-              c.defineStateCycle.includes('Saturated Evaporator Temperature (SET)') ||
-              c.defineStateCycle.includes('Saturated Evaporation Pressure (SEP)')
+              c.defineStateCycle?.includes('Saturated Evaporator Temperature (SET)') ||
+              c.defineStateCycle?.includes('Saturated Evaporation Pressure (SEP)')
             );
             const csupIdx = projectCalcs.findIndex(c =>
-              c.defineStateCycle.includes('Compressor Superheat')
+              c.defineStateCycle?.includes('Compressor Superheat')
             );
             const supIdx = projectCalcs.findIndex(c =>
-              c.defineStateCycle.includes('Evaporator Superheat')
+              c.defineStateCycle?.includes('Evaporator Superheat')
             );
 
             const sct = sctIdx !== -1 ? parseFloat(projectCalcs[sctIdx].temperature) : NaN;
             const set = setIdx !== -1 ? parseFloat(projectCalcs[setIdx].temperature) : NaN;
 
-            if ((targetCalc.defineStateCycle.includes('Saturated Condensation Temperature') || targetCalc.defineStateCycle.includes('Saturated Condensation Pressure')) && csupIdx !== -1 && !isNaN(sct)) {
+            if ((targetCalc.defineStateCycle?.includes('Saturated Condensation Temperature') || targetCalc.defineStateCycle?.includes('Saturated Condensation Pressure')) && csupIdx !== -1 && !isNaN(sct)) {
               // Formula 3: Compressor Superheat = Discharge Gas Temperature - SCT
               let csupValue = numValue === null ? null : numValue - sct; // difference in display unit
               projectCalcs[csupIdx] = { ...projectCalcs[csupIdx], inputValue: csupValue };
               updateCalculation(projectCalcs[csupIdx]._id, { inputValue: csupValue });
-            } else if ((targetCalc.defineStateCycle.includes('Saturated Evaporator Temperature') || targetCalc.defineStateCycle.includes('Saturated Evaporation Pressure')) && supIdx !== -1 && !isNaN(set)) {
+            } else if ((targetCalc.defineStateCycle?.includes('Saturated Evaporator Temperature') || targetCalc.defineStateCycle?.includes('Saturated Evaporation Pressure')) && supIdx !== -1 && !isNaN(set)) {
               // Formula 1: Evaporator Superheat = 5/9 * (Suction Gas Temperature - SET)
               let deltaT = numValue === null ? null : numValue - set; // difference in display unit
               let supValue = (deltaT === null || isNaN(deltaT)) ? null : (isFahrenheit ? deltaT * 5 / 9 : deltaT);
@@ -525,7 +525,7 @@ const ProjectDashboard = () => {
 
             const sct = sctIdx !== -1 ? parseFloat(projectCalcs[sctIdx].temperature) : NaN;
 
-            if ((targetCalc.defineStateCycle.includes('Saturated Condensation Temperature') || targetCalc.defineStateCycle.includes('Saturated Condensation Pressure')) && subIdx !== -1 && !isNaN(sct)) {
+            if ((targetCalc.defineStateCycle?.includes('Saturated Condensation Temperature') || targetCalc.defineStateCycle?.includes('Saturated Condensation Pressure')) && subIdx !== -1 && !isNaN(sct)) {
               // Formula 2: Condenser Subcooling = 1.0 (or 5/9 if F) * (SCT - Liquid Temperature)
               let subVal = numValue === null ? null : sct - numValue; // difference in display unit
               const subValK = (subVal === null || isNaN(subVal)) ? null : (isFahrenheit ? subVal * 5 / 9 : subVal);
@@ -555,7 +555,7 @@ const ProjectDashboard = () => {
       'Compressor Superheat',
       'Liquid temperature',
       'Isentropic Efficiency'
-    ].some(t => type.includes(t));
+    ].some(t => type?.includes(t));
   };
 
   const handleRenameCancel = () => {
@@ -958,16 +958,16 @@ const ProjectDashboard = () => {
     const currentTempUnit = (project?.lockedTemperatureUnit || temperatureUnit || 'celsius').toLowerCase();
     const tempLabel = currentTempUnit === 'fahrenheit' ? 'F' : 'C';
 
-    if (type.includes('Compressor Superheat')) {
+    if (type?.includes('Compressor Superheat')) {
       return `Compressor Superheat(${tempLabel})`;
     }
 
-    if (type.includes('Liquid temperature')) {
+    if (type?.includes('Liquid temperature')) {
       return `Liquid temperature(${tempLabel})`;
     }
 
     const targetTypes = ['Evaporator Superheat', 'Condenser Subcooling', 'Compressor Superheat'];
-    if (targetTypes.includes(type) && !type.includes('(K)')) {
+    if (targetTypes.includes(type) && !type?.includes('(K)')) {
       return `${type}(K)`;
     }
     return type;
@@ -1246,7 +1246,7 @@ const ProjectDashboard = () => {
 
                                     const currentTempUnit = (project?.lockedTemperatureUnit || temperatureUnit || 'celsius').toLowerCase();
                                     const isFahrenheit = currentTempUnit === 'fahrenheit';
-                                    const isCompSH = type.includes('Compressor Superheat');
+                                    const isCompSH = type?.includes('Compressor Superheat');
 
                                     return (
                                       <input
@@ -1254,7 +1254,7 @@ const ProjectDashboard = () => {
                                         className="inline-rename-input"
                                         value={calc.inputValue ?? ''}
                                         placeholder={
-                                          ['Evaporator Superheat', 'Condenser Subcooling', 'Compressor Superheat', 'Evaporator Superheat(K)', 'Condenser Subcooling(K)', 'Compressor Superheat(K)'].some(t => type.includes(t))
+                                          ['Evaporator Superheat', 'Condenser Subcooling', 'Compressor Superheat', 'Evaporator Superheat(K)', 'Condenser Subcooling(K)', 'Compressor Superheat(K)'].some(t => type?.includes(t))
                                             ? `Value (${isCompSH ? (isFahrenheit ? 'F' : 'C') : 'K'})...`
                                             : (isInputEnabled(calc.defineStateCycle) ? "Value..." : "Formula")
                                         }
@@ -1263,7 +1263,7 @@ const ProjectDashboard = () => {
                                         onClick={(e) => e.stopPropagation()}
                                         style={{ width: '100%', opacity: !isInputEnabled(calc.defineStateCycle) ? 0.6 : 1 }}
                                         title={
-                                          ['Evaporator Superheat', 'Condenser Subcooling', 'Compressor Superheat', 'Evaporator Superheat(K)', 'Condenser Subcooling(K)', 'Compressor Superheat(K)'].some(t => type.includes(t))
+                                          ['Evaporator Superheat', 'Condenser Subcooling', 'Compressor Superheat', 'Evaporator Superheat(K)', 'Condenser Subcooling(K)', 'Compressor Superheat(K)'].some(t => type?.includes(t))
                                             ? `the value is in ${isCompSH ? (isFahrenheit ? '°F' : '°C') : 'Kelvin'}`
                                             : ""
                                         }
@@ -1293,8 +1293,8 @@ const ProjectDashboard = () => {
                                   'Evaporator Superheat(K)',
                                   'Condenser Subcooling(K)',
                                   'Compressor Superheat(K)',
-                                  'Liquid temperature'
-                                ].some(t => calc.defineStateCycle.includes(t)) ? 'disabled-cell' : ''}`}
+                                   'Liquid temperature'
+                                 ].some(t => calc.defineStateCycle?.includes(t)) ? 'disabled-cell' : ''}`}
                                 title={(() => {
                                   const type = calc.defineStateCycle;
                                   if ([
@@ -1323,7 +1323,7 @@ const ProjectDashboard = () => {
                                     'Condenser Subcooling(K)',
                                     'Compressor Superheat(K)',
                                     'Liquid temperature'
-                                  ].some(t => type.includes(t))) {
+                                  ].some(t => type?.includes(t))) {
                                     return 'Field disabled for this state';
                                   }
                                   return '';
@@ -1363,7 +1363,7 @@ const ProjectDashboard = () => {
                                     'Condenser Subcooling(K)',
                                     'Compressor Superheat(K)',
                                     'Liquid temperature'
-                                  ].some(t => calc.defineStateCycle.includes(t))) {
+                                  ].some(t => calc.defineStateCycle?.includes(t))) {
                                     return (
                                       <input
                                         type="number"
@@ -1432,7 +1432,7 @@ const ProjectDashboard = () => {
                                       'Evaporator Superheat(K)',
                                       'Condenser Subcooling(K)',
                                       'Compressor Superheat(K)'
-                                    ].some(t => calc.defineStateCycle.includes(t))) {
+                                    ].some(t => calc.defineStateCycle?.includes(t))) {
                                       return (
                                         <input
                                           type="number"
@@ -1452,10 +1452,10 @@ const ProjectDashboard = () => {
                               <td>
                                 <div className="row-actions">
                                   <button
-                                    className={`action-btn edit-btn ${['Evaporator Superheat', 'Condenser Subcooling', 'Compressor Superheat', 'Liquid temperature'].some(t => calc.defineStateCycle.includes(t)) ? 'disabled' : ''}`}
+                                    className={`action-btn edit-btn ${['Evaporator Superheat', 'Condenser Subcooling', 'Compressor Superheat', 'Liquid temperature'].some(t => calc.defineStateCycle?.includes(t)) ? 'disabled' : ''}`}
                                     onClick={() => handleFetchCondition(calc)}
-                                    title={['Evaporator Superheat', 'Condenser Subcooling', 'Compressor Superheat', 'Liquid temperature'].some(t => calc.defineStateCycle.includes(t)) ? "This state is managed in the table" : "Edit / Load into calculator"}
-                                    disabled={['Evaporator Superheat', 'Condenser Subcooling', 'Compressor Superheat', 'Liquid temperature'].some(t => calc.defineStateCycle.includes(t))}
+                                    title={['Evaporator Superheat', 'Condenser Subcooling', 'Compressor Superheat', 'Liquid temperature'].some(t => calc.defineStateCycle?.includes(t)) ? "This state is managed in the table" : "Edit / Load into calculator"}
+                                    disabled={['Evaporator Superheat', 'Condenser Subcooling', 'Compressor Superheat', 'Liquid temperature'].some(t => calc.defineStateCycle?.includes(t))}
                                   >
                                     <Edit2 size={16} />
                                   </button>

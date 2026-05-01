@@ -11,6 +11,7 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
+    email: '',
     password: '',
     confirmPassword: ''
   });
@@ -29,7 +30,7 @@ const LoginPage = () => {
 
   const validatePassword = (password) => {
     return {
-      length: password.length === 12,
+      length: password.length >= 8,
       uppercase: /[A-Z]/.test(password),
       number: /[0-9]/.test(password),
       special: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>\/?]/.test(password)
@@ -96,6 +97,11 @@ const LoginPage = () => {
         setLoading(false);
         return;
       }
+      if (!formData.email) {
+        setErrors({ email: 'Email is required' });
+        setLoading(false);
+        return;
+      }
 
       try {
         const registerUrl = getAuthUrl('register');
@@ -104,14 +110,15 @@ const LoginPage = () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             username: formData.username,
+            email: formData.email,
             password: formData.password
           })
         });
         const data = await response.json();
         if (response.ok) {
-          setMessage('✅ Registration successful! Please login.');
+          setMessage('✅ Request sent! You will receive an email once approved.');
           setIsLogin(true);
-          setFormData({ username: '', password: '', confirmPassword: '' });
+          setFormData({ username: '', email: '', password: '', confirmPassword: '' });
         } else {
           setErrors({ general: data.error || 'Registration failed' });
         }
@@ -157,7 +164,7 @@ const LoginPage = () => {
   const handleSwitchMode = (type) => {
     setUserType(type);
     setIsLogin(true);
-    setFormData({ username: '', password: '', confirmPassword: '' });
+    setFormData({ username: '', email: '', password: '', confirmPassword: '' });
     setErrors({});
     setMessage('');
     setShowPassword(false);
@@ -267,6 +274,30 @@ const LoginPage = () => {
               )}
             </div>
 
+            {/* Email Field (Signup Only) */}
+            {!isLogin && (
+              <div className="form-group">
+                <label htmlFor="email">Email Address</label>
+                <div className="input-wrapper">
+                  <input
+                    id="email"
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    placeholder="Enter your email address"
+                    required
+                  />
+                </div>
+                {errors.email && (
+                  <div className="error-message">
+                    <XCircle size={16} />
+                    {errors.email}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Password Field */}
             <div className="form-group">
               <label htmlFor="password">Password</label>
@@ -356,7 +387,7 @@ const LoginPage = () => {
                 fontSize: '0.8rem'
               }}>
                 <div style={{ color: passwordChecks.length ? '#10B981' : '#94A3B8', display: 'flex', gap: '8px', marginBottom: '4px' }}>
-                  {passwordChecks.length ? <CheckCircle size={14} /> : <XCircle size={14} />} Exactly 12 characters
+                  {passwordChecks.length ? <CheckCircle size={14} /> : <XCircle size={14} />} At least 8 characters
                 </div>
                 <div style={{ color: passwordChecks.uppercase ? '#10B981' : '#94A3B8', display: 'flex', gap: '8px', marginBottom: '4px' }}>
                   {passwordChecks.uppercase ? <CheckCircle size={14} /> : <XCircle size={14} />} 1 Uppercase letter
@@ -395,7 +426,7 @@ const LoginPage = () => {
                   animation: 'spin 0.6s linear infinite' 
                 }}></span>
               ) : (
-                isLogin ? 'Sign In' : 'Create Account'
+                isLogin ? 'Sign In' : 'Request Account'
               )}
             </button>
 
@@ -405,7 +436,7 @@ const LoginPage = () => {
                 <div className="toggle-link">
                   {isLogin ? "New to the platform?" : "Already have an account?"}
                   <button onClick={() => setIsLogin(!isLogin)}>
-                    {isLogin ? "Sign up" : "Sign in"}
+                    {isLogin ? "Request account" : "Sign in"}
                   </button>
                 </div>
 

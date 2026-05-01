@@ -1,4 +1,6 @@
-import API_BASE_URL from './config/apiConfig';
+import API_BASE_URL, { getAuthUrl, getRefrigerantUrl } from './config/apiConfig';
+
+export { getAuthUrl, getRefrigerantUrl };
 
 // Calculate pressure from temperature
 export const calculatePressure = async (data) => {

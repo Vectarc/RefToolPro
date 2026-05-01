@@ -19,16 +19,54 @@ const User = {
     return { ...data, comparePassword: async (pwd) => bcrypt.compare(pwd, data.password) };
   },
 
-  async create({ username, password }) {
+  async create({ username, email, password }) {
     const supabase = getClient();
     const hashed = await bcrypt.hash(password, 10);
     const { data, error } = await supabase
       .from('users')
-      .insert({ username, password: hashed, role: 'user' })
+      .insert({ 
+        username, 
+        email, 
+        password: hashed, 
+        role: 'user',
+        status: 'pending' // New users start as pending
+      })
       .select()
       .single();
     if (error) throw new Error(error.message);
     return data;
+  },
+
+  async findAllPending() {
+    const supabase = getClient();
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('status', 'pending');
+    if (error) throw new Error(error.message);
+    return data || [];
+  },
+
+  async approve(userId) {
+    const supabase = getClient();
+    const { data, error } = await supabase
+      .from('users')
+      .update({ status: 'approved' })
+      .eq('id', userId)
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    return data;
+  },
+
+  async reject(userId) {
+    const supabase = getClient();
+    const { error } = await supabase
+      .from('users')
+      .delete()
+      .eq('id', userId);
+    if (error) throw new Error(error.message);
+    return true;
   }
 };
 

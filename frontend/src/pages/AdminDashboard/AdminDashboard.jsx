@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { Plus, Edit2, Trash2, Save, X, AlertCircle, RefreshCw } from 'lucide-react';
+import { Plus, Edit2, Trash2, Save, X, AlertCircle, RefreshCw, Users, Check, Trash, CheckCircle, User } from 'lucide-react';
 import Sidebar from '../../components/Sidebar/Sidebar';
 import RefrigerantInfo from '../../components/RefrigerantInfo/RefrigerantInfo';
 import InputPanel from '../../components/InputPanel/InputPanel';
@@ -8,7 +8,7 @@ import RefrigerantDrawer from '../../components/RefrigerantDrawer/RefrigerantDra
 import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
 import EmptyState from '../../components/EmptyState/EmptyState';
 import RefrigerantDataService from '../../services/refrigerantDataService';
-import { getAllRefrigerants, addNewRefrigerant, updateExistingRefrigerant, deleteExistingRefrigerant } from '../../api';
+import { getAllRefrigerants, addNewRefrigerant, updateExistingRefrigerant, deleteExistingRefrigerant, getAuthUrl } from '../../api';
 import { DeviceContext } from '../../App';
 import './AdminDashboard.css';
 
@@ -66,6 +66,9 @@ const AdminDashboard = ({ showCrudPanel, onShowCrudPanelChange }) => {
   const [refrigerants, setRefrigerants] = useState([]);
   const [refrigerantList, setRefrigerantList] = useState(DEFAULT_REFRIGERANTS);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('database'); // 'database' or 'users'
+  const [pendingRequests, setPendingRequests] = useState([]);
+  const [isLoadingRequests, setIsLoadingRequests] = useState(false);
 
   const initialFormState = {
     id: null,
@@ -232,6 +235,81 @@ const AdminDashboard = ({ showCrudPanel, onShowCrudPanelChange }) => {
       setError('Failed to load refrigerants: ' + err.message);
     }
   };
+
+  const loadPendingRequests = async () => {
+    setIsLoadingRequests(true);
+    try {
+      const response = await fetch(getAuthUrl('pending-requests'), {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('userToken')}`
+        }
+      });
+      const data = await response.json();
+      if (data.success) {
+        setPendingRequests(data.requests);
+      } else {
+        setError(data.error || 'Failed to load requests');
+      }
+    } catch (err) {
+      console.error('Error loading pending requests:', err);
+      setError('Error loading pending requests');
+    } finally {
+      setIsLoadingRequests(false);
+    }
+  };
+
+  const handleApproveUser = async (userId) => {
+    try {
+      const response = await fetch(getAuthUrl('approve-request'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('userToken')}`
+        },
+        body: JSON.stringify({ userId })
+      });
+      const data = await response.json();
+      if (data.success) {
+        setMessage('✅ User approved successfully!');
+        loadPendingRequests();
+      } else {
+        setError(data.error || 'Failed to approve user');
+      }
+    } catch (err) {
+      console.error('Error approving user:', err);
+      setError('Error approving user');
+    }
+  };
+
+  const handleRejectUser = async (userId) => {
+    if (!window.confirm('Are you sure you want to reject and delete this request?')) return;
+    try {
+      const response = await fetch(getAuthUrl('reject-request'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('userToken')}`
+        },
+        body: JSON.stringify({ userId })
+      });
+      const data = await response.json();
+      if (data.success) {
+        setMessage('✅ User request rejected');
+        loadPendingRequests();
+      } else {
+        setError(data.error || 'Failed to reject user');
+      }
+    } catch (err) {
+      console.error('Error rejecting user:', err);
+      setError('Error rejecting user');
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'users') {
+      loadPendingRequests();
+    }
+  }, [activeTab]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -554,8 +632,17 @@ const AdminDashboard = ({ showCrudPanel, onShowCrudPanelChange }) => {
         {/* Admin Panel Header - Outside scrollable content */}
         {showCrudPanel && (
           <div className="admin-panel-header">
-            <h1>Admin Control Panel</h1>
-            <p>Manage Refrigerant Database</p>
+            <div className="header-text">
+              <h1>Admin Control Panel</h1>
+              <p>{activeTab === 'database' ? 'Manage Refrigerant Database' : 'Approve New User Accounts'}</p>
+            </div>
+            <button 
+              className="panel-close-btn" 
+              onClick={() => onShowCrudPanelChange(false)}
+              aria-label="Close panel"
+            >
+              <X size={24} />
+            </button>
           </div>
         )}
 
@@ -569,7 +656,28 @@ const AdminDashboard = ({ showCrudPanel, onShowCrudPanelChange }) => {
               </div>
             )}
 
-            {/* Action Buttons */}
+            {/* Tab Switcher */}
+            <div className="admin-tabs">
+              <button 
+                className={`admin-tab ${activeTab === 'database' ? 'active' : ''}`}
+                onClick={() => setActiveTab('database')}
+              >
+                <Save size={18} />
+                Database
+              </button>
+              <button 
+                className={`admin-tab ${activeTab === 'users' ? 'active' : ''}`}
+                onClick={() => setActiveTab('users')}
+              >
+                <Users size={18} />
+                User Requests
+                {pendingRequests.length > 0 && <span className="tab-badge">{pendingRequests.length}</span>}
+              </button>
+            </div>
+
+            {activeTab === 'database' ? (
+              <>
+                {/* Action Buttons */}
             <div className="admin-action-buttons">
               <button
                 className={showForm ? 'admin-btn admin-btn-cancel' : 'admin-btn admin-btn-add'}
@@ -1253,6 +1361,86 @@ const AdminDashboard = ({ showCrudPanel, onShowCrudPanelChange }) => {
                         </div>
                       </div>
                     ))}
+                  </div>
+                )}
+              </div>
+            )}
+              </>
+            ) : (
+              <div className="admin-users-section">
+                <div className="section-header">
+                  <h3>Pending Account Requests</h3>
+                  <button onClick={loadPendingRequests} className="admin-btn admin-btn-refresh">
+                    <RefreshCw size={18} className={isLoadingRequests ? 'rotating' : ''} />
+                    Refresh
+                  </button>
+                </div>
+
+                {isLoadingRequests ? (
+                  <div className="loading-state">Loading requests...</div>
+                ) : pendingRequests.length === 0 ? (
+                  <div className="empty-requests">
+                    <CheckCircle size={48} />
+                    <p>No pending requests at the moment.</p>
+                  </div>
+                ) : (
+                  <div className="requests-container">
+                    <div className="requests-table-wrapper">
+                      <table className="admin-table user-requests-table">
+                        <thead>
+                          <tr>
+                            <th>User Details</th>
+                            <th>Requested On</th>
+                            <th className="text-right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {pendingRequests.map(request => (
+                            <tr key={request.id}>
+                              <td className="user-info-cell">
+                                <div className="user-avatar">
+                                  <User size={20} />
+                                </div>
+                                <div className="user-details">
+                                  <span className="user-name">{request.username}</span>
+                                  <span className="user-email">{request.email}</span>
+                                </div>
+                              </td>
+                              <td className="date-cell">
+                                <span className="request-date">
+                                  {new Date(request.created_at).toLocaleDateString(undefined, { 
+                                    year: 'numeric', 
+                                    month: 'short', 
+                                    day: 'numeric' 
+                                  })}
+                                </span>
+                              </td>
+                              <td className="actions-cell text-right">
+                                <button 
+                                  onClick={() => handleApproveUser(request.id)}
+                                  className="approve-btn-enhanced"
+                                  title="Approve Account"
+                                >
+                                  <Check size={18} />
+                                  Approve
+                                </button>
+                                <button 
+                                  onClick={() => handleRejectUser(request.id)}
+                                  className="reject-btn-enhanced"
+                                  title="Reject Request"
+                                >
+                                  <Trash size={18} />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    
+                    <div className="requests-footer">
+                      <p>Total pending requests: <strong>{pendingRequests.length}</strong></p>
+                    </div>
                   </div>
                 )}
               </div>
