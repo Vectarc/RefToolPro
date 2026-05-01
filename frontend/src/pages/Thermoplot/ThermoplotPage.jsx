@@ -82,11 +82,7 @@ const ThermoplotPage = () => {
           // If we have precise data for this ref, start loading it
           if (REF_FILE_MAP[ref]) {
             setIsPreciseLoading(true);
-          } else {
-            setLoading(false);
           }
-        } else {
-          setLoading(false);
         }
         return;
       }
@@ -112,24 +108,30 @@ const ThermoplotPage = () => {
           setPreciseGraphData(null);
         } finally {
           setIsPreciseLoading(false);
-          setLoading(false);
         }
       } else {
         setPreciseGraphData(null);
         setIsPreciseLoading(false);
-        // Only set loading false if we have plotData
-        if (plotData) setLoading(false);
       }
     };
 
     if (refrigerant) {
       loadPreciseData();
     }
-  }, [refrigerant, plotData]);
+  }, [refrigerant]);
 
   // Fetch accurate cycle data from API if only basic calculations are present
   useEffect(() => {
-    if (plotData && plotData.calculations && !plotData.state_points && !loading) {
+    // Wait until project data is loaded AND precise JSON (if any) is loaded
+    if (!plotData || isPreciseLoading) return;
+
+    // If we already have state points, we can stop loading
+    if (plotData.state_points) {
+      setLoading(false);
+      return;
+    }
+
+    if (plotData.calculations && !plotData.state_points) {
       setLoading(true);
 
       const fetchData = async () => {
@@ -298,8 +300,11 @@ const ThermoplotPage = () => {
       };
 
       fetchData();
+    } else {
+      // No state points needed or already have them
+      setLoading(false);
     }
-  }, [plotData?.calculations, plotData?.stateCycle, refrigerant]);
+  }, [plotData?.calculations, plotData?.stateCycle, refrigerant, isPreciseLoading]);
 
 const chartData = useMemo(() => {
   if (!plotData || plotData.calculations.length === 0) return null;
