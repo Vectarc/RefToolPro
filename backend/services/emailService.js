@@ -1,4 +1,5 @@
 const nodemailer = require('nodemailer');
+const dns = require('dns');
 
 // Create transporter
 const transporter = nodemailer.createTransport({
@@ -13,7 +14,10 @@ const transporter = nodemailer.createTransport({
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
-  family: 4, // Force IPv4 to avoid ENETUNREACH on IPv6
+  // Strictly force IPv4 resolution to avoid ENETUNREACH on IPv6-only Render networks
+  lookup: (hostname, options, callback) => {
+    dns.lookup(hostname, { family: 4 }, callback);
+  },
 });
 
 // Verify connection configuration
